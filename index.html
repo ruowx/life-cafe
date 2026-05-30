@@ -1,0 +1,689 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>طلب المنتجات</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;900&display=swap');
+
+    :root {
+      --bg: #0f1117;
+      --surface: #1a1d27;
+      --card: #22263a;
+      --accent: #25D366;
+      --accent2: #128C7E;
+      --text: #f0f2ff;
+      --muted: #8892b0;
+      --border: #2e3450;
+      --radius: 18px;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: 'Cairo', sans-serif;
+      background: var(--bg);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* Top bar */
+    .topbar {
+      background: var(--surface);
+      padding: 14px 20px 14px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      position: sticky;
+      top: 0;
+      z-index: 10;
+    }
+
+    .topbar-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .store-name {
+      font-size: 22px;
+      font-weight: 900;
+      color: var(--text);
+    }
+
+    .store-badge {
+      background: linear-gradient(135deg, var(--accent), var(--accent2));
+      color: white;
+      font-size: 11px;
+      font-weight: 700;
+      padding: 4px 12px;
+      border-radius: 20px;
+    }
+
+    .topbar-sub {
+      font-size: 12px;
+      color: var(--muted);
+    }
+
+
+    /* Search bar */
+    .search-wrap {
+      background: var(--surface);
+      padding: 10px 14px 14px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .search-input {
+      width: 100%;
+      background: var(--bg);
+      border: 1.5px solid var(--border);
+      border-radius: 12px;
+      padding: 10px 16px 10px 40px;
+      color: var(--text);
+      font-family: 'Cairo', sans-serif;
+      font-size: 15px;
+      outline: none;
+      transition: border-color 0.2s;
+      direction: rtl;
+    }
+
+    .search-input:focus {
+      border-color: var(--accent);
+    }
+
+    .search-input::placeholder {
+      color: var(--muted);
+    }
+
+    .search-wrap-inner {
+      position: relative;
+    }
+
+    .search-icon {
+      position: absolute;
+      left: 12px;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 18px;
+      height: 18px;
+      fill: var(--muted);
+      pointer-events: none;
+    }
+
+    .no-results {
+      grid-column: 1 / -1;
+      text-align: center;
+      color: var(--muted);
+      font-size: 15px;
+      padding: 40px 0;
+    }
+
+    /* Product list */
+    .product-list {
+      flex: 1;
+      overflow-y: auto;
+      padding: 16px 14px;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 14px;
+      align-content: start;
+      scrollbar-width: none;
+    }
+
+    .product-list::-webkit-scrollbar {
+      display: none;
+    }
+
+    /* Product Card */
+    .product-card {
+      background: var(--card);
+      border-radius: var(--radius);
+      border: 1px solid var(--border);
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      transition: border-color 0.2s;
+      position: relative;
+    }
+
+    .product-card.has-qty {
+      border-color: rgba(37, 211, 102, 0.4);
+    }
+
+    /* Image */
+    .product-img-wrap {
+      width: 100%;
+      height: 180px;
+      overflow: hidden;
+      background: #ffffff;
+      flex-shrink: 0;
+    }
+
+    .product-img-wrap img {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+      object-position: center;
+      display: block;
+    }
+
+    .img-placeholder {
+      width: 100%;
+      height: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 54px;
+      background: linear-gradient(135deg, #1e2135, #252a3d);
+    }
+
+    /* Info */
+    .product-info {
+      padding: 12px 14px 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .product-name {
+      font-size: 17px;
+      font-weight: 700;
+      color: var(--text);
+      line-height: 1.4;
+      text-align: right;
+    }
+
+    /* Quantity row */
+    .qty-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .qty-btn {
+      width: 42px;
+      height: 42px;
+      border-radius: 12px;
+      border: none;
+      cursor: pointer;
+      font-size: 22px;
+      font-weight: 900;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: transform 0.1s ease, opacity 0.2s;
+      -webkit-tap-highlight-color: transparent;
+      line-height: 1;
+      flex-shrink: 0;
+    }
+
+    .qty-btn.minus {
+      background: #e05c7a;
+      color: #fff;
+    }
+
+    .qty-btn.minus:disabled {
+      opacity: 0.3;
+      cursor: default;
+    }
+
+    .qty-btn.minus:active {
+      transform: scale(0.88);
+    }
+
+    .qty-btn.plus {
+      background: #25D366;
+      color: #fff;
+    }
+
+    .qty-btn.plus:active {
+      transform: scale(0.88);
+    }
+
+    .qty-display {
+      font-size: 20px;
+      font-weight: 900;
+      color: var(--text);
+      min-width: 32px;
+      text-align: center;
+    }
+
+    /* Selected dot */
+    .selected-dot {
+      position: absolute;
+      top: 10px;
+      left: 10px;
+      width: 10px;
+      height: 10px;
+      background: var(--accent);
+      border-radius: 50%;
+      opacity: 0;
+      transition: opacity 0.2s;
+      box-shadow: 0 0 8px var(--accent);
+      z-index: 2;
+    }
+
+    .product-card.has-qty .selected-dot {
+      opacity: 1;
+    }
+
+    /* Floating send button popup */
+    .send-popup {
+      position: fixed;
+      bottom: 24px;
+      left: 50%;
+      transform: translateX(-50%) translateY(100px);
+      width: calc(100% - 32px);
+      max-width: 480px;
+      z-index: 100;
+      opacity: 0;
+      transition: transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.25s ease;
+      pointer-events: none;
+    }
+
+    .send-popup.visible {
+      transform: translateX(-50%) translateY(0);
+      opacity: 1;
+      pointer-events: all;
+    }
+
+    .send-popup-inner {
+      background: linear-gradient(135deg, #1a2e24, #1a2b28);
+      border: 1px solid rgba(37, 211, 102, 0.3);
+      border-radius: 20px;
+      padding: 12px 16px 12px 20px;
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      box-shadow: 0 12px 40px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(37, 211, 102, 0.15);
+    }
+
+    .send-popup-info {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+      text-align: right;
+    }
+
+    .send-popup-count {
+      font-size: 13px;
+      color: var(--muted);
+    }
+
+    .send-popup-count span {
+      color: var(--accent);
+      font-weight: 700;
+    }
+
+    .send-popup-total {
+      font-size: 12px;
+      color: var(--muted);
+    }
+
+    .send-popup-total span {
+      color: var(--text);
+      font-weight: 600;
+    }
+
+    .send-btn {
+      padding: 13px 20px;
+      background: linear-gradient(135deg, #25D366, #128C7E);
+      border: none;
+      border-radius: 14px;
+      color: white;
+      font-family: 'Cairo', sans-serif;
+      font-size: 15px;
+      font-weight: 900;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      transition: transform 0.12s ease;
+      -webkit-tap-highlight-color: transparent;
+      box-shadow: 0 6px 20px rgba(37, 211, 102, 0.4);
+      white-space: nowrap;
+      flex-shrink: 0;
+    }
+
+    .send-btn:active {
+      transform: scale(0.93);
+    }
+
+    .send-btn svg {
+      width: 20px;
+      height: 20px;
+      fill: white;
+      flex-shrink: 0;
+    }
+
+    /* Toast */
+    .toast {
+      position: fixed;
+      bottom: 30px;
+      left: 50%;
+      transform: translateX(-50%) translateY(20px);
+      background: #1e2435;
+      color: var(--text);
+      padding: 12px 24px;
+      border-radius: 30px;
+      font-family: 'Cairo', sans-serif;
+      font-size: 14px;
+      font-weight: 600;
+      border: 1px solid var(--border);
+      opacity: 0;
+      transition: all 0.3s ease;
+      z-index: 999;
+      white-space: nowrap;
+    }
+
+    .toast.show {
+      opacity: 1;
+      transform: translateX(-50%) translateY(0);
+    }
+  </style>
+</head>
+
+<body>
+
+  <!-- Top bar -->
+  <div class="topbar">
+    <div class="topbar-row">
+      <span class="store-name">🛒 تسوق</span>
+      <span class="store-badge">واتساب</span>
+    </div>
+    <span class="topbar-sub">اختر المنتجات وأرسل طلبك الى ابو عقيل مباشرة</span>
+  </div>
+
+  <!-- Search bar -->
+  <div class="search-wrap">
+    <div class="search-wrap-inner">
+      <svg class="search-icon" viewBox="0 0 24 24">
+        <path d="M21 21l-4.35-4.35M17 11A6 6 0 1 1 5 11a6 6 0 0 1 12 0z" stroke-width="2" stroke="currentColor"
+          fill="none" stroke-linecap="round" />
+      </svg>
+      <input class="search-input" id="searchInput" type="text" placeholder="ابحث عن منتج..." oninput="filterProducts()">
+    </div>
+  </div>
+
+  <!-- Product list -->
+  <div class="product-list" id="productList"></div>
+
+  <!-- Floating send popup -->
+  <div class="send-popup" id="sendPopup">
+    <div class="send-popup-inner">
+      <div class="send-popup-info">
+        <div class="send-popup-count">🧺 <span id="selectedCount">0</span> منتج مختار</div>
+        <div class="send-popup-total">المجموع: <span id="totalQty">0</span> قطعة</div>
+      </div>
+      <button class="send-btn" id="sendBtn" onclick="sendToWhatsApp()">
+        <svg viewBox="0 0 24 24">
+          <path
+            d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z" />
+        </svg>
+        إرسال
+      </button>
+    </div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+  <script>
+    // ─── الإعدادات ────────────────────────────────────────────────
+    const WHATSAPP_NUMBER = "9647801474373"; // ← ضع رقم الواتساب هنا
+
+    const PRODUCTS = [
+      { id: 1, name: "موز", img: "banana.jpg" },
+      { id: 2, name: "اناناس", img: "pinnapple.jpg" },
+      { id: 3, name: "برتقال", img: "orange.jpg" },
+      { id: 4, name: "ليمون", img: "lemon.jpg" },
+      { id: 5, name: "تفاح احمر", img: "rapple.jpg" },
+      { id: 6, name: "تفاح اخضر", img: "gapple.jpg" },
+      { id: 7, name: "فرولة", img: "strawberry.jpg" },
+      { id: 8, name: "كيوي", img: "kiwi.jpg" },
+      { id: 9, name: "نعناع", img: "mint.jpg" },
+      { id: 10, name: "مانجا", img: "مانجا.jpg" },
+      { id: 11, name: "خوخ", img: "خوخ.jpg" },
+      { id: 12, name: "بطيخ", img: "بطيخ.jpg" },
+      { id: 13, name: "جزر ", img: "جزر.jpg" },
+      { id: 14, name: "ماء", img: "ماء.jpg" },
+      { id: 15, name: "ببسي", img: "ببسي.jpg" },
+      { id: 16, name: "سبرايت", img: "سفن.jpg" },
+      { id: 17, name: "ديو", img: "ديو.jpg" },
+      { id: 18, name: "ميرندا", img: "ميرندا.jpg" },
+      { id: 19, name: "تايكر", img: "تايكر.jpg" },
+      { id: 20, name: "ريدبول", img: "ريدبول.jpg" },
+      { id: 21, name: "صودة", img: "صودة.jpg" },
+      { id: 22, name: "صوص نوتيلا", img: "نوتيلا.jpg" },
+      { id: 23, name: "صوص وايت", img: "وايت.jpg" },
+      { id: 24, name: "صوص لوتس", img: "لوتس.jpg" },
+      { id: 25, name: "صوص بستاشيو", img: "بستاشيو.jpg" },
+      { id: 26, name: "سيروب كرز", img: "سيروبكرز.jpg" },
+      { id: 27, name: "سيروب ليمون", img: "سيروبليمون.jpg" },
+      { id: 28, name: "سيروب نعناع", img: "سيروبنعناع.jpg" },
+      { id: 29, name: "سيروب نعناع بارد", img: "سيروبنعناعبارد.jpg" },
+      { id: 30, name: "سيروب فانيلا", img: "سيروبفانيلا.jpg" },
+      { id: 31, name: "سيروب كراميل", img: "سيروبكراميل.jpg" },
+      { id: 32, name: "سيروب باشن فروت", img: "سيروبباشنفروت.jpg" },
+      { id: 33, name: "سيروب اناناس", img: "سيروباناناس.jpg" },
+      { id: 34, name: "سيروب مانجا", img: "سيروبمانجا.jpg" },
+      { id: 35, name: "سيروب فرولة", img: "سيروبفرولة.jpg" },
+      { id: 36, name: "سيروب بلاك بيري", img: "سيروببلاكبيري.jpg" },
+      { id: 37, name: "سيروب روز بيري", img: "سيروبروزبيري.jpg" },
+      { id: 38, name: "سيروب بلو بيري", img: "سيروببلوبيري.jpg" },
+      { id: 39, name: "سيروب بلو", img: "سيروببلو.jpg" },
+      { id: 40, name: "سيروب روز", img: "سيروبروز.jpg" },
+      { id: 41, name: "سيروب كيوي", img: "سيروبكيوي.jpg" },
+      { id: 42, name: "سيروب رمان", img: "سيروبرمان.jpg" },
+      { id: 43, name: "سيروب علكة", img: "سيروبعلكة.jpg" },
+      { id: 44, name: "سيروب خوخ", img: "سيروبخوخ.jpg" },
+      { id: 45, name: "سيروب بندق", img: "سيروببندق.jpg" },
+      { id: 46, name: "سيروب ركي", img: "سيروبركي.jpg" },
+      { id: 47, name: "صوص كراميل", img: "صوصكراميل.jpg" },
+      { id: 48, name: "صوص كيوي", img: "صوصكيوي.jpg" },
+      { id: 49, name: "صوص مانجا", img: "صوصمانجا.jpg" },
+      { id: 50, name: "صوص باشن فروت", img: "صوصباشنفروت.jpg" },
+      { id: 51, name: "صوص بلو بيري", img: "صوصبلوبيري.jpg" },
+      { id: 52, name: "صوص خوخ", img: "صوصخوخ.jpg" },
+      { id: 53, name: "صوص روز بيري", img: "صوصروزبيري.jpg" },
+      { id: 54, name: "صوص دارك شوكلت", img: "صوصداركشوكلت.jpg" },
+      { id: 55, name: "صوص اناناس", img: "صوصاناناس.jpg" },
+      { id: 56, name: "صوص فرولة", img: "صوصفرولة.jpg" },
+      { id: 57, name: "صوص جوز الهند", img: "صوصجوزالهند.jpg" },
+      { id: 58, name: "بن", img: "بن.jpg" },
+      { id: 59, name: "قهوة تركية", img: "قهوةتركية.jpg" },
+      { id: 60, name: "شاي كرك", img: "شايكرك.jpg" },
+      { id: 61, name: "شاي ليمون", img: "شايليمون.jpg" },
+      { id: 62, name: "شاي", img: "شاي.jpg" },
+      { id: 63, name: "سحلب", img: "سحلب.jpg" },
+      { id: 64, name: "شوكليت باودر", img: "شوكلتباودر.jpg" },
+      { id: 65, name: "فراب فانيلا", img: "فرابتشينو.jpg" },
+      { id: 66, name: "كابتشينو", img: "كابتشينو.jpg" },
+      { id: 67, name: "فطائر لحم", img: "فطائرلحم.jpg" },
+      { id: 68, name: "فطائر دجاج", img: "فطائردجاج.jpg" },
+      { id: 69, name: "كيك كلاسيك", img: "كيككلاسيك.jpg" },
+      { id: 70, name: "كيك حليب", img: "كيكحليب.jpg" },
+      { id: 71, name: "دونات", img: "دونات.jpg" },
+      { id: 72, name: "كوب سعادة", img: "كوبسعادة.jpg" },
+      { id: 73, name: "آيس كريم", img: "ايسكريم.jpg" },
+      { id: 74, name: "كندر", img: "كندر.jpg" },
+      { id: 75, name: "تويكس", img: "تويكس.jpg" },
+      { id: 76, name: "سنيكرز", img: "سنيكرز.jpg" },
+      { id: 77, name: "بريتونه", img: "بريتونه.jpg" },
+      { id: 78, name: "بسكويت أوريو", img: "بسكويتاوريو.jpg" },
+      { id: 79, name: "بسكويت لوتس", img: "بسكويتلوتس.jpg" },
+      { id: 80, name: "بسكويت شاي", img: "بسكويتشاي.jpg" },
+      { id: 81, name: "شبس", img: "شبس.jpg" },
+      { id: 82, name: "فستق", img: "فستق.jpg" },
+      { id: 83, name: "ذرة", img: "ذرة.jpg" },
+      { id: 84, name: "كرزات", img: "كرزات.jpg" },
+      { id: 85, name: "كوب بارد سفري", img: "كوببارد.jpg" },
+      { id: 86, name: "كوب حار سفري", img: "كوبحار.jpg" },
+      { id: 87, name: "غطاء بارد سفري", img: "غطاءبارد.jpg" },
+      { id: 88, name: "غطاء حار سفري", img: "غطاءحار.jpg" },
+      { id: 89, name: "كوب شاي سفري", img: "كوبشاي.jpg" },
+      { id: 90, name: "صحن بان كيك سفري", img: "صحنبانكيك.jpg" },
+      { id: 91, name: "صحن كريب سفري", img: "صحنكريب.jpg" },
+      { id: 92, name: "صحن صغير سفري", img: "صحنصغير.jpg" },
+      { id: 93, name: "شوكة وسكين", img: "شوكةوسكين.jpg" },
+      { id: 94, name: "حراكة شاي", img: "حراكةشاي.jpg" },
+      { id: 95, name: "قصبة كبير", img: "قصبةكبير.jpg" },
+      { id: 96, name: "قصبة صغير", img: "قصبةصغير.jpg" },
+      { id: 97, name: "عود أسنان", img: "عوداسنان.jpg" },
+      { id: 98, name: "حليب", img: "حليب.jpg" },
+      { id: 99, name: "طحين", img: "طحين.jpg" },
+      { id: 100, name: "بيض", img: "بيض.jpg" },
+      { id: 101, name: "فانيلا باودر", img: "فانيلاباودر.jpg" },
+      { id: 102, name: "بايكينج باودر", img: "بايكينجباودر.jpg" },
+      { id: 103, name: "حليب مكثف", img: "حليبمكثف.jpg" },
+      { id: 104, name: "زبدة", img: "زبدة.jpg" },
+      { id: 105, name: "زيت", img: "زيت.jpg" },
+      { id: 106, name: "سكر", img: "سكر.jpg" },
+      { id: 107, name: "ملح", img: "ملح.jpg" },
+      { id: 108, name: "سكين حديد", img: "سكينحديد.jpg" },
+      { id: 109, name: "استكان", img: "استكان.jpg" },
+      { id: 1110, name: "فلتر ماء", img: "فلترماء.jpg" },
+      { id: 111, name: "وصلة مسح", img: "وصلمسح.jpg" },
+
+    ];
+    // ─────────────────────────────────────────────────────────────
+
+    const quantities = {};
+    PRODUCTS.forEach(p => quantities[p.id] = 0);
+
+    function imgErr(el) {
+      el.parentNode.innerHTML = '<div class="img-placeholder">📦</div>';
+    }
+
+    function filterProducts() {
+      const query = document.getElementById("searchInput").value.trim().toLowerCase();
+      const list = document.getElementById("productList");
+      let visible = 0;
+      PRODUCTS.forEach(p => {
+        const card = document.getElementById("card-" + p.id);
+        if (!card) return;
+        const match = p.name.toLowerCase().includes(query) || query === "";
+        card.style.display = match ? "" : "none";
+        if (match) visible++;
+      });
+      const noRes = document.getElementById("noResults");
+      if (noRes) noRes.style.display = visible === 0 ? "" : "none";
+    }
+
+    function renderProducts() {
+      const list = document.getElementById("productList");
+      list.innerHTML = '<div class="no-results" id="noResults" style="display:none">لا توجد نتائج</div>';
+      PRODUCTS.forEach(p => {
+        const qty = quantities[p.id];
+        const card = document.createElement("div");
+        card.className = "product-card" + (qty > 0 ? " has-qty" : "");
+        card.id = "card-" + p.id;
+        card.innerHTML =
+          '<div class="selected-dot"></div>' +
+          '<div class="product-img-wrap">' +
+          '<img src="' + p.img + '" alt="' + p.name + '" onerror="imgErr(this)">' +
+          '</div>' +
+          '<div class="product-info">' +
+          '<div class="product-name">' + p.name + '</div>' +
+          '<div class="qty-row">' +
+          '<button class="qty-btn minus" onclick="changeQty(' + p.id + ',-1)" id="minus-' + p.id + '"' + (qty <= 0 ? ' disabled' : '') + '>−</button>' +
+          '<span class="qty-display" id="qty-' + p.id + '">' + qty + '</span>' +
+          '<button class="qty-btn plus" onclick="changeQty(' + p.id + ',1)" id="plus-' + p.id + '">+</button>' +
+          '</div>' +
+          '</div>';
+        list.appendChild(card);
+      });
+      updateSummary();
+    }
+
+    function changeQty(id, delta) {
+      const current = quantities[id];
+      const next = Math.max(0, current + delta);
+      if (next === current) return;
+      quantities[id] = next;
+      document.getElementById("qty-" + id).textContent = next;
+      document.getElementById("minus-" + id).disabled = next <= 0;
+      document.getElementById("card-" + id).className = "product-card" + (next > 0 ? " has-qty" : "");
+      updateSummary();
+    }
+
+    function updateSummary() {
+      const selected = PRODUCTS.filter(p => quantities[p.id] > 0).length;
+      const total = PRODUCTS.reduce((sum, p) => sum + quantities[p.id], 0);
+      document.getElementById("selectedCount").textContent = selected;
+      document.getElementById("totalQty").textContent = total;
+      const popup = document.getElementById("sendPopup");
+      if (selected > 0) {
+        popup.classList.add("visible");
+      } else {
+        popup.classList.remove("visible");
+      }
+    }
+
+    function toArabicNumerals(n) {
+      return String(n).replace(/\d/g, d => '٠١٢٣٤٥٦٧٨٩'[d]);
+    }
+
+    function getArabicDay(day) {
+      const days = ['الأحد','الاثنين','الثلاثاء','الأربعاء','الخميس','الجمعة','السبت'];
+      return days[day];
+    }
+
+    function sendToWhatsApp() {
+      const selected = PRODUCTS.filter(p => quantities[p.id] > 0);
+      if (selected.length === 0) return;
+
+      const now = new Date();
+      const yyyy = toArabicNumerals(now.getFullYear());
+      const mm   = toArabicNumerals(String(now.getMonth() + 1).padStart(2, '0'));
+      const dd   = toArabicNumerals(String(now.getDate()).padStart(2, '0'));
+      const hh   = toArabicNumerals(String(now.getHours()).padStart(2, '0'));
+      const min  = toArabicNumerals(String(now.getMinutes()).padStart(2, '0'));
+      const dayName = getArabicDay(now.getDay());
+
+      const divider = '─────────────────';
+
+      const lines = [];
+      lines.push('🛒 نقوصات البار');
+      lines.push('');
+      lines.push('المنتج             العدد');
+      lines.push(divider);
+
+      selected.forEach(p => {
+        const qty = toArabicNumerals(quantities[p.id]);
+        const name = p.name;
+        const spaces = ' '.repeat(Math.max(1, 20 - name.length));
+        lines.push(name + spaces + qty);
+      });
+
+      lines.push(divider);
+      lines.push('');
+      lines.push('📅 التاريخ: ' + yyyy + '/' + mm + '/' + dd + ' ' + dayName);
+      lines.push('🕐 الوقت: ' + hh + ':' + min);
+
+      const url = "https://wa.me/" + WHATSAPP_NUMBER + "?text=" + encodeURIComponent(lines.join("\n"));
+      showToast("⏩ جاري فتح واتساب...");
+      setTimeout(() => window.open(url, "_blank"), 500);
+    }
+
+    function showToast(msg) {
+      const t = document.getElementById("toast");
+      t.textContent = msg;
+      t.classList.add("show");
+      setTimeout(() => t.classList.remove("show"), 2500);
+    }
+
+    renderProducts();
+  </script>
+</body>
+
+</html>
